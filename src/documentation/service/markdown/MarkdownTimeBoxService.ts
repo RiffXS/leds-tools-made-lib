@@ -44,15 +44,15 @@ export class MarkdownTimeBoxService {
 
     private async createCategoryIndex(){
         return `
-      {
-        "label": "Gestão",
-        "position": 1,
-        "link": {
-            "type": "generated-index",
-            "description": "Documentos relativos ao planejamento."
-        }
-        }
-        `
+{
+    "label": "Gestão",
+    "position": 1,
+    "link": {
+        "type": "generated-index",
+        "description": "Documentos relativos ao planejamento."
+    }
+}
+`
     }
     public async create(){
 
@@ -73,12 +73,12 @@ export class MarkdownTimeBoxService {
             let generatorx = new CumulativeFlowDiagram(timebox,this.TIMEBOX_CHARTS_PATH+`/cfd-${timebox.id}.svg`);
             let generatorThroput = new ThroughputGenerator(timebox, this.TIMEBOX_CHARTS_PATH+`/throuput-${timebox.id}.svg`)
             
-            if (!exist){
+            if (!exist) {
                 fs.writeFileSync(filePath, this.createTimeBoxExport(timebox))
                 generatorx.generate();    
                 generatorThroput.generate()        
             }
-            if (exist && timebox.status != 'CLOSED'){
+            if (exist && timebox.status != 'CLOSED') {
                 fs.writeFileSync(filePath, this.createTimeBoxExport(timebox))                        
                 generatorThroput.generate()        
             }
@@ -95,16 +95,14 @@ export class MarkdownTimeBoxService {
             return false;
         }
     }
-    private createTimeBoxExport(timeBox: TimeBox ):string {
+    private createTimeBoxExport(timeBox: TimeBox):string {
 
-       let monteCarloAnalysis = ""
-       if (timeBox.status == "IN_PROGRESS"){
-          const monteCarlo = new SprintMonteCarlo(timeBox,10000);
-          monteCarloAnalysis = monteCarlo.generateMarkdownReport();
-       }
-
-      
-      
+    let monteCarloAnalysis = ""
+    if (timeBox.status == "IN_PROGRESS"){
+        const monteCarlo = new SprintMonteCarlo(timeBox,10000);
+        monteCarloAnalysis = monteCarlo.generateMarkdownReport();
+    }
+    
     const analyzer = new ProjectDependencyAnalyzer(timeBox);
     const dependencyAnalysis = analyzer.generateAnalysis();
     const generator = new TimeBoxGanttGenerator();
@@ -138,7 +136,7 @@ ${dependencyAnalysis}
 ![ Throughput](./charts/throuput-${timeBox.id}.svg)
         
 ${monteCarloAnalysis}
-        `
+`
 }
 
     protected async retrive(database: string){
@@ -187,6 +185,5 @@ ${monteCarloAnalysis}
         return await generator.createSprintCompleteMarkdown(summary);           
         
     }
-   
 
 }

@@ -3,6 +3,13 @@ import { TimeBox, SprintItem } from '../../../../../model/models.js';
 export class TimeBoxGanttGenerator {
     private static readonly MERMAID_FORMAT = 'YYYY-MM-DD';
 
+    private parseISODate(date: string | undefined): Date | null {
+        if (!date) return null;
+        const [year, month, day] = date.split('-').map(num => parseInt(num, 10));
+        const parsedDate = new Date(year, month - 1, day);
+        return !isNaN(parsedDate.getTime()) ? parsedDate : null;
+    }
+
     private parseBrazilianDate(date: string | undefined): Date | null {
         if (!date) return null;
         const [day, month, year] = date.split('/').map(num => parseInt(num, 10));
@@ -12,12 +19,12 @@ export class TimeBoxGanttGenerator {
 
     private isValidDate(date: string | undefined): boolean {
         if (!date) return false;
-        return this.parseBrazilianDate(date) !== null;
+        return this.parseISODate(date) !== null;
     }
 
     private formatMermaidDate(date: string | undefined): string {
         if (!this.isValidDate(date)) return '';
-        const parsedDate = this.parseBrazilianDate(date)!;
+        const parsedDate = this.parseISODate(date)!;
         const ano = parsedDate.getFullYear();
         const mes = String(parsedDate.getMonth() + 1).padStart(2, '0');
         const dia = String(parsedDate.getDate()).padStart(2, '0');
@@ -45,13 +52,13 @@ export class TimeBoxGanttGenerator {
             const taskStyle = this.getTaskStyle(item);
 
             // Adiciona barra planejada apenas se ambas as datas forem válidas
-            if (this.isValidDate(item.plannedStartDate) && this.isValidDate(item.planneddueDate)) {
-                section += `    ${taskTitle} (Planejado) :${taskTitle}_plan, ${this.formatMermaidDate(item.plannedStartDate)}, ${this.formatMermaidDate(item.planneddueDate)}\n`;
+            if (this.isValidDate(item.plannedStartDate) && this.isValidDate(item.plannedDueDate)) {
+                section += `    ${taskTitle} (Planejado) :${taskTitle}_plan, ${this.formatMermaidDate(item.plannedStartDate)}, ${this.formatMermaidDate(item.plannedDueDate)}\n`;
             }
 
             // Adiciona barra real apenas se pelo menos a data inicial for válida
             if (this.isValidDate(item.startDate)) {
-                const endDate = this.isValidDate(item.dueDate) ? item.dueDate : item.planneddueDate;
+                const endDate = this.isValidDate(item.dueDate) ? item.dueDate : item.plannedDueDate;
                 if (this.isValidDate(endDate)) {
                     section += `    ${taskTitle} (Real) :${taskStyle}, ${taskTitle}_actual, ${this.formatMermaidDate(item.startDate)}, ${this.formatMermaidDate(endDate)}\n`;
                 }

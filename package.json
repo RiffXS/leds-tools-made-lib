@@ -1,7 +1,7 @@
 {
   "name": "made-report-lib",
   "version": "0.0.20",
-  "description": "Made`s Report Lib",
+  "description": "Made's Report Lib",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -33,10 +33,12 @@
     "@types/lowdb": "^1.0.15",
     "dotenv": "^16.5.0",
     "lowdb": "^7.0.1",
+    "source-map": "^0.7.4",
+    "tsup": "^8.4.0",
     "url": "^0.11.4"
   },
   "devDependencies": {
-    "tsup": "^8.4.0",
+    "@types/node": "^22.15.3",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }

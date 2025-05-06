@@ -13,6 +13,21 @@ export class CumulativeFlowDiagram {
     this.outputPath = outputPath;
   }
 
+  private parseISODate(dateString: string): Date {
+    try {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+
+      if (isNaN(date.getTime())) {
+        throw new Error(`Data inválida: ${dateString}`);
+      }
+
+      return date
+    } catch (error) {
+      throw new Error(`Erro ao processar data ${dateString}: ${error}`)
+    }
+  }
+
   private parseBrazilianDate(dateString: string): Date {
     try {
       const [day, month, year] = dateString.split('/').map(Number);
@@ -31,19 +46,25 @@ export class CumulativeFlowDiagram {
   private formatDate(date: Date) {
     const dia = date.getDate().toString().padStart(2, '0');
     const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-    return `${dia}/${mes}`;
+    return `${mes}-${dia}`;
   }
 
   private processData() {
     try {
-      const startDate = this.parseBrazilianDate(this.data.startDate);
-      const endDate = this.parseBrazilianDate(this.data.endDate);
+      const startDate = this.parseISODate(this.data.startDate);
+      const endDate = this.parseISODate(this.data.endDate);
       
       if (endDate < startDate) {
         throw new Error('Data de fim é anterior à data de início');
       }
 
-      const days = [];
+      const days: {
+        day: string
+        date: Date
+        todo: number;
+        inProgress: number;
+        done: number;
+      }[] = [];
       let currentDate = new Date(startDate);
       
       while (currentDate <= endDate) {
@@ -114,7 +135,7 @@ export class CumulativeFlowDiagram {
       const chartHeight = height - margin.top - margin.bottom;
 
       const xScale = (date: Date) => {
-        const startDate = this.parseBrazilianDate(this.data.startDate);
+        const startDate = this.parseISODate(this.data.startDate);
         const totalDays = Math.max(1, dailyData.length - 1);
         const dayIndex = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
         return margin.left + (dayIndex * (chartWidth / totalDays));

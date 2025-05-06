@@ -21,6 +21,11 @@ export class ProjectThroughputGenerator {
       return "TODO"; // Default fallback
     }
 
+    private parseISODate(dateString: string): Date {
+      const [year, month, day] = dateString.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+
     private parseBrazilianDate(dateString: string): Date {
       const [day, month, year] = dateString.split('/').map(Number);
       return new Date(year, month - 1, day);
@@ -28,8 +33,8 @@ export class ProjectThroughputGenerator {
 
     private sortSprints(sprints: TimeBox[]): TimeBox[] {
       return sprints.sort((a, b) => 
-        this.parseBrazilianDate(a.startDate).getTime() - 
-        this.parseBrazilianDate(b.startDate).getTime()
+        this.parseISODate(a.startDate).getTime() - 
+        this.parseISODate(b.startDate).getTime()
       );
     }
   
@@ -37,12 +42,16 @@ export class ProjectThroughputGenerator {
       const formatDate = (date: Date) => {
         const dia = date.getDate().toString().padStart(2, '0');
         const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-        return `${dia}/${mes}`;
+        return `${mes}-${dia}`;
       };
   
-      const startDate = this.parseBrazilianDate(this.sprints[0].startDate);
-      const endDate = this.parseBrazilianDate(this.sprints[this.sprints.length - 1].endDate);
-      const days = [];
+      const startDate = this.parseISODate(this.sprints[0].startDate);
+      const endDate = this.parseISODate(this.sprints[this.sprints.length - 1].endDate);
+      const days: {
+        day: string
+        date: Date
+        done: number
+      }[] = [];
       
       let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
@@ -51,7 +60,7 @@ export class ProjectThroughputGenerator {
         
         const allTasksUntilDay = this.sprints.flatMap(sprint => {
           return sprint.sprintItems.filter(task => {
-            const taskDueDate = task.dueDate ? this.parseBrazilianDate(task.dueDate) : null;
+            const taskDueDate = task.dueDate ? this.parseISODate(task.dueDate) : null;
             return taskDueDate ? taskDueDate.toDateString() === currentDate.toDateString() : false;
           });
         });

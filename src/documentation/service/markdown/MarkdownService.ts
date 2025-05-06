@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { createPath} from '../../../util/generator-utils.js'
 import { MarkdownBacklogService } from "./MarkdownBacklogService.js";
 import { MarkdownTimeBoxService } from "./MarkdownTimeBoxService.js";
-import { MardownRoadmapService } from "./MarkdownRoadmapService.js";
+import { MarkdownRoadmapService } from "./MarkdownRoadmapService.js";
 
 
 export class MarkdownService {
@@ -13,7 +13,7 @@ export class MarkdownService {
     
     markdownBacklogService: MarkdownBacklogService
     markdownTimeBoxService: MarkdownTimeBoxService
-    markdownRoadmapService: MardownRoadmapService
+    markdownRoadmapService: MarkdownRoadmapService
 
     constructor ( target_folder:string){
        
@@ -41,9 +41,5 @@ export class MarkdownService {
         return this.markdownTimeBoxService.createSprintSummaryReport()
         
     }
-
- 
-    
-     
 
 }

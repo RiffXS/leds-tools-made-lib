@@ -46,6 +46,21 @@ export class SprintMonteCarlo {
     this.simulations = simulations;
   }
 
+  private parseISODate(dateString: string): Date {
+    try {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+
+      if (isNaN(date.getTime())) {
+        throw new Error(`Data inválida: ${dateString}`);
+      }
+
+      return date
+    } catch (error) {
+      throw new Error(`Erro ao processar data ${dateString}: ${error}`)
+    }
+  }
+
   private parseBrazilianDate(dateString: string): Date {
     try {
       const [day, month, year] = dateString.split('/').map(Number);
@@ -88,7 +103,7 @@ export class SprintMonteCarlo {
   private calculateRemainingWorkdays(): number {
     try {
       const today = new Date();
-      const endDate = this.parseBrazilianDate(this.data.endDate);
+      const endDate = this.parseISODate(this.data.endDate);
       const diffTime = endDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return Math.max(1, diffDays); // Garante pelo menos 1 dia restante
@@ -147,7 +162,7 @@ export class SprintMonteCarlo {
 
     // Se não houver datas simuladas, usa a data planejada
     if (completionDates.length === 0) {
-      completionDates.push(this.parseBrazilianDate(this.data.endDate));
+      completionDates.push(this.parseISODate(this.data.endDate));
     }
 
     const dateFrequencyMap = new Map<string, number>();
@@ -208,7 +223,7 @@ export class SprintMonteCarlo {
     try {
       const completionDates = this.simulateCompletionDates();
       const metrics = this.getSprintMetrics();
-      const sprintEndDate = this.parseBrazilianDate(this.data.endDate);
+      const sprintEndDate = this.parseISODate(this.data.endDate);
 
       // Se não houver tarefas, retorna relatório simplificado
       if (metrics.totalTasks === 0) {
@@ -305,7 +320,7 @@ export class SprintMonteCarlo {
 
       markdown += `## ℹ️ Informações da Sprint\n\n`;
       markdown += `- **Sprint**: ${this.data.name}\n`;
-      markdown += `- **Início**: ${this.formatDate(this.parseBrazilianDate(this.data.startDate))}\n`;
+      markdown += `- **Início**: ${this.formatDate(this.parseISODate(this.data.startDate))}\n`;
       markdown += `- **Término Planejado**: ${this.formatDate(sprintEndDate)}\n`;
       markdown += `- **Total de Tarefas**: ${metrics.totalTasks}\n`;
       markdown += `- **Simulações Realizadas**: ${this.simulations.toLocaleString()}\n\n`;

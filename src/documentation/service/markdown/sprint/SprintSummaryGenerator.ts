@@ -55,296 +55,297 @@ export interface SprintSummary {
 }
 
 export class SprintSummaryGenerator {
-  private sprints: TimeBox[];
+    private sprints: TimeBox[];
 
-  constructor(sprints: TimeBox[]) {
-      this.sprints = sprints;
-  }
+    constructor(sprints: TimeBox[]) {
+        this.sprints = sprints;
+    }
 
-  private getStatusEmoji(status: string): string {
-      const statusEmojis: Record<string, string> = {
-          'TODO': '🔵',
-          'IN_PROGRESS': '🟡',
-          'DONE': '🟢'
-      };
-      return statusEmojis[status] || '🔵';
-  }
+    private getStatusEmoji(status: string): string {
+        const statusEmojis: Record<string, string> = {
+            'TODO': '🔵',
+            'IN_PROGRESS': '🟡',
+            'DONE': '🟢'
+        };
+        return statusEmojis[status] || '🔵';
+    }
 
-  private determineStatus(item: { startDate?: string, dueDate?: string }): string {
-    if (!item.startDate && !item.dueDate) return 'TODO';
-    if (item.startDate && !item.dueDate) return 'IN_PROGRESS';
-    if (item.startDate && item.dueDate) return 'DONE';
-    return 'TODO';
-  }
+    private determineStatus(item: { startDate?: string, dueDate?: string }): string {
+        if (!item.startDate && !item.dueDate) return 'TODO';
+        if (item.startDate && !item.dueDate) return 'IN_PROGRESS';
+        if (item.startDate && item.dueDate) return 'DONE';
+        return 'TODO';
+    }
 
-  private isOverdue(item: PersonSummary['items'][0]): boolean {
-      if (!item.dueDate) return false;
-      const today = new Date();
-      const dueDate = new Date(item.dueDate);
-      return dueDate < today;
-  }
+    private isOverdue(item: PersonSummary['items'][0]): boolean {
+        if (!item.dueDate) return false;
+        const today = new Date();
+        const dueDate = new Date(item.dueDate);
+        return dueDate < today;
+    }
 
-  private isToday(item: PersonSummary['items'][0]): boolean {
-      if (!item.dueDate) return false;
-      const today = new Date();
-      const dueDate = new Date(item.dueDate);
-      return (
-          dueDate.getDate() === today.getDate() &&
-          dueDate.getMonth() === today.getMonth() &&
-          dueDate.getFullYear() === today.getFullYear()
-      );
-  }
+    private isToday(item: PersonSummary['items'][0]): boolean {
+        if (!item.dueDate) return false;
+        const today = new Date();
+        const dueDate = new Date(item.dueDate);
+        return (
+            dueDate.getDate() === today.getDate() &&
+            dueDate.getMonth() === today.getMonth() &&
+            dueDate.getFullYear() === today.getFullYear()
+        );
+    }
 
-  private calculateStats(items: SprintItem[]): SprintSummaryStats {
-      const total = items.length;
-      const statusCount = items.reduce((acc: Record<string, number>, item) => {
-          const status = this.determineStatus({
-              startDate: item.startDate,
-              dueDate: item.dueDate
-          });
-          acc[status] = (acc[status] || 0) + 1;
-          return acc;
-      }, {});
-
-      const statusPercentage = Object.entries(statusCount).reduce((acc: Record<string, string>, [status, count]) => {
-          acc[status] = `${((count / total) * 100).toFixed(1)}%`;
-          return acc;
-      }, {});
-
-      return {
-          total,
-          statusCount,
-          statusPercentage
-      };
-  }
-
-  private getPersonSummary(personItems: SprintItem[]): PersonSummary {
-      const { assignee } = personItems[0];
-      const stats = this.calculateStats(personItems);
-
-      return {
-        id: assignee.id,
-        name: assignee.name,
-        total: stats.total,
-        statusCount: stats.statusCount,
-        statusPercentage: stats.statusPercentage,
-        items: personItems.map(item => {
-            const itemTitle = item.issue.title || item.issue.key || `Task ${item.id}`;
-            
-            return {
-                id: item.id,
-                title: itemTitle,
-                status: this.determineStatus({
-                    startDate: item.startDate,
-                    dueDate: item.dueDate
-                }),
+    private calculateStats(items: SprintItem[]): SprintSummaryStats {
+        const total = items.length;
+        const statusCount = items.reduce((acc: Record<string, number>, item) => {
+            const status = this.determineStatus({
                 startDate: item.startDate,
                 dueDate: item.dueDate
-            };
-        })
-    };
-  }
+            });
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
 
-  private calculateThroughputData(items: (SprintItem | PersonTaskItem)[]): ThroughputData[] {
-    const tasksByDate = new Map<string, number>();
-    
-    items
-        .filter(item => this.determineStatus(item) === 'DONE' && item.dueDate)
-        .forEach(item => {
-            const date = item.dueDate!.split('T')[0];
-            tasksByDate.set(date, (tasksByDate.get(date) || 0) + 1);
+        const statusPercentage = Object.entries(statusCount).reduce((acc: Record<string, string>, [status, count]) => {
+            acc[status] = `${((count / total) * 100).toFixed(1)}%`;
+            return acc;
+        }, {});
+
+        return {
+            total,
+            statusCount,
+            statusPercentage
+        };
+    }
+
+    private getPersonSummary(personItems: SprintItem[]): PersonSummary {
+        const { assignee } = personItems[0];
+        const stats = this.calculateStats(personItems);
+
+        return {
+            id: assignee.id,
+            name: assignee.name,
+            total: stats.total,
+            statusCount: stats.statusCount,
+            statusPercentage: stats.statusPercentage,
+            items: personItems.map(item => {
+                const itemTitle = item.issue.title || item.issue.key || `Task ${item.id}`;
+                
+                return {
+                    id: item.id,
+                    title: itemTitle,
+                    status: this.determineStatus({
+                        startDate: item.startDate,
+                        dueDate: item.dueDate
+                    }),
+                    startDate: item.startDate,
+                    dueDate: item.dueDate
+                };
+            })
+        };
+    }
+
+    private calculateThroughputData(items: (SprintItem | PersonTaskItem)[]): ThroughputData[] {
+        const tasksByDate = new Map<string, number>();
+        
+        items
+            .filter(item => this.determineStatus(item) === 'DONE' && item.dueDate)
+            .forEach(item => {
+                const date = item.dueDate!.split('T')[0];
+                tasksByDate.set(date, (tasksByDate.get(date) || 0) + 1);
+            });
+
+        const sortedDates = Array.from(tasksByDate.keys()).sort();
+        let cumulative = 0;
+        return sortedDates.map(date => {
+            cumulative += tasksByDate.get(date)!;
+            return { date, count: cumulative };
+        });
+    }
+
+    private generateThroughputTable(data: ThroughputData[]): string {
+        if (data.length === 0) return '';
+
+        let table = `| Data | Tarefas Concluídas | Total Acumulado |\n`;
+        table += `|:-----|:-----------------:|:---------------:|\n`;
+
+        let previousCount = 0;
+        data.forEach(({ date, count }) => {
+            const dailyCount = count - previousCount;
+            const formattedDate = new Date(date).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            table += `| ${formattedDate} | ${dailyCount} | ${count} |\n`;
+            previousCount = count;
         });
 
-    const sortedDates = Array.from(tasksByDate.keys()).sort();
-    let cumulative = 0;
-    return sortedDates.map(date => {
-        cumulative += tasksByDate.get(date)!;
-        return { date, count: cumulative };
-    });
-}
+        return table;
+    }
 
-  private generateThroughputTable(data: ThroughputData[]): string {
-      if (data.length === 0) return '';
-
-      let table = `| Data | Tarefas Concluídas | Total Acumulado |\n`;
-      table += `|:-----|:-----------------:|:---------------:|\n`;
-
-      let previousCount = 0;
-      data.forEach(({ date, count }) => {
-          const dailyCount = count - previousCount;
-          const formattedDate = new Date(date).toLocaleDateString('pt-BR', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric'
-          });
-          table += `| ${formattedDate} | ${dailyCount} | ${count} |\n`;
-          previousCount = count;
-      });
-
-      return table;
-  }
-
-  private createTasksTable(items: PersonTaskItem[], title: string): string {
-    if (items.length === 0) return '';
-    
-    let table = `### ${title}\n\n`;
-    table += `| Status | Título | Data Início | Vencimento |\n`;
-    table += `|:------:|:-------|:------------|:-----------|:----------|\n`;
-    
-    items.forEach(task => {
-        const statusEmoji = this.getStatusEmoji(task.status);
-        const startDate = task.startDate || '-';
-        const dueDate = task.dueDate || '-';
+    private createTasksTable(items: PersonTaskItem[], title: string): string {
+        if (items.length === 0) return '';
         
-        table += `| ${statusEmoji} | ${task.title} | ${startDate} | ${dueDate} |\n`;
-    });
-    
-    return table + '\n';
-}
+        let table = `### ${title}\n\n`;
+        table += `| Status | Título | Data Início | Vencimento |\n`;
+        table += `|:------:|:-------|:------------|:-----------|:----------|\n`;
+        
+        items.forEach(task => {
+            const statusEmoji = this.getStatusEmoji(task.status);
+            const startDate = task.startDate || '-';
+            const dueDate = task.dueDate || '-';
+            
+            table += `| ${statusEmoji} | ${task.title} | ${startDate} | ${dueDate} |\n`;
+        });
+        
+        return table + '\n';
+    }
 
-  public generateSprintsSummary(): SprintSummary[] {
-      return this.sprints
-          .filter(sprint => sprint.status === 'IN_PROGRESS')
-          .map(sprint => {
-              const stats = this.calculateStats(sprint.sprintItems);
+    public generateSprintsSummary(): SprintSummary[] {
+        return this.sprints
+            .filter(sprint => sprint.status === 'IN_PROGRESS')
+            .map(sprint => {
+                const stats = this.calculateStats(sprint.sprintItems);
 
-              const itemsByPerson = sprint.sprintItems.reduce((acc: Record<string, SprintItem[]>, item) => {
-                  const personId = item.assignee.id;
-                  if (!acc[personId]) {
-                      acc[personId] = [];
-                  }
-                  acc[personId].push(item);
-                  return acc;
-              }, {});
+                const itemsByPerson = sprint.sprintItems.reduce((acc: Record<string, SprintItem[]>, item) => {
+                    const personId = item.assignee.id;
+                    if (!acc[personId]) {
+                        acc[personId] = [];
+                    }
+                    acc[personId].push(item);
+                    return acc;
+                }, {});
 
-              const peopleStats = Object.values(itemsByPerson).map(personItems => 
-                  this.getPersonSummary(personItems)
-              );
+                const peopleStats = Object.values(itemsByPerson).map(personItems => 
+                    this.getPersonSummary(personItems)
+                );
 
-              return {
-                  id: sprint.id || '',
-                  name: sprint.name,
-                  description: sprint.description,
-                  startDate: sprint.startDate,
-                  endDate: sprint.endDate,
-                  status: this.determineStatus({
-                      startDate: sprint.startDate,
-                      dueDate: sprint.endDate
-                  }),
-                  stats,
-                  peopleStats
-              };
-          });
-  }
+                return {
+                    id: sprint.id || '',
+                    name: sprint.name,
+                    description: sprint.description,
+                    startDate: sprint.startDate,
+                    endDate: sprint.endDate,
+                    status: this.determineStatus({
+                        startDate: sprint.startDate,
+                        dueDate: sprint.endDate
+                    }),
+                    stats,
+                    peopleStats
+                };
+            });
+    }
 
-  public createSprintCompleteMarkdown(sprints: SprintSummary[]): string {
-      let markdown = '';
-      
-      sprints.forEach((sprint, index) => {
-          if (index > 0) {
-              markdown += '---\n\n';
-          }
+    public createSprintCompleteMarkdown(sprints: SprintSummary[]): string {
+        let markdown = '';
+        
+        sprints.forEach((sprint, index) => {
+            if (index > 0) {
+                markdown += '---\n\n';
+            }
 
-          markdown += `# 🎯 Sprint: ${sprint.name}\n\n`;
-          markdown += `> ${sprint.description}\n\n`;
-          
-          // Informações Gerais
-          markdown += `## 📋 Informações Gerais\n\n`;
-          markdown += `| Período | Status | Total de Tarefas |\n`;
-          markdown += `|:--------|:-------|:----------------:|\n`;
-          markdown += `| ${sprint.startDate} a ${sprint.endDate} | ${this.getStatusEmoji(sprint.status)} ${sprint.status} | ${sprint.stats.total} |\n\n`;
+            markdown += `# 🎯 Sprint: ${sprint.name}\n\n`;
+            markdown += `> ${sprint.description}\n\n`;
+            
+            // Informações Gerais
+            markdown += `## 📋 Informações Gerais\n\n`;
+            markdown += `| Período | Status | Total de Tarefas |\n`;
+            markdown += `|:--------|:-------|:----------------:|\n`;
+            markdown += `| ${sprint.startDate} a ${sprint.endDate} | ${this.getStatusEmoji(sprint.status)} ${sprint.status} | ${sprint.stats.total} |\n\n`;
 
-          // Throughput Geral
-          markdown += `## 📈 Análise de Throughput\n\n`;
-          const sprintThroughput = this.calculateThroughputData(
-              sprint.peopleStats.flatMap(person => person.items)
-          );
-          
-          if (sprintThroughput.length > 0) {
-              markdown += `### Throughput Geral do Sprint\n\n`;
-              markdown += this.generateThroughputTable(sprintThroughput) + '\n';
+            // Throughput Geral
+            markdown += `## 📈 Análise de Throughput\n\n`;
+            const sprintThroughput = this.calculateThroughputData(
+                sprint.peopleStats.flatMap(person => person.items)
+            );
+            
+            if (sprintThroughput.length > 0) {
+                markdown += `### Throughput Geral do Sprint\n\n`;
+                markdown += this.generateThroughputTable(sprintThroughput) + '\n';
 
-              const totalDays = sprintThroughput.length;
-              const totalCompleted = sprintThroughput[sprintThroughput.length - 1].count;
-              const avgDaily = (totalCompleted / totalDays).toFixed(1);
-              
-              markdown += `**Métricas de Velocidade:**\n`;
-              markdown += `- Média diária de entregas: ${avgDaily} tarefas/dia\n`;
-              markdown += `- Total de dias com entregas: ${totalDays}\n`;
-              markdown += `- Total de tarefas entregues: ${totalCompleted}\n\n`;
-          }
+                const totalDays = sprintThroughput.length;
+                const totalCompleted = sprintThroughput[sprintThroughput.length - 1].count;
+                const avgDaily = (totalCompleted / totalDays).toFixed(1);
+                
+                markdown += `**Métricas de Velocidade:**\n`;
+                markdown += `- Média diária de entregas: ${avgDaily} tarefas/dia\n`;
+                markdown += `- Total de dias com entregas: ${totalDays}\n`;
+                markdown += `- Total de tarefas entregues: ${totalCompleted}\n\n`;
+            }
 
-          // Estatísticas
-          markdown += `## 📊 Estatísticas Gerais\n\n`;
-          markdown += `| Status | Percentual | Quantidade |\n`;
-          markdown += `|:-------|:-----------|:----------:|\n`;
-          Object.entries(sprint.stats.statusPercentage).forEach(([status, percentage]) => {
-              const emoji = this.getStatusEmoji(status);
-              markdown += `| ${emoji} ${status} | \`${percentage}\` | ${sprint.stats.statusCount[status]} |\n`;
-          });
-          markdown += '\n';
+            // Estatísticas
+            markdown += `## 📊 Estatísticas Gerais\n\n`;
+            markdown += `| Status | Percentual | Quantidade |\n`;
+            markdown += `|:-------|:-----------|:----------:|\n`;
+            Object.entries(sprint.stats.statusPercentage).forEach(([status, percentage]) => {
+                const emoji = this.getStatusEmoji(status);
+                markdown += `| ${emoji} ${status} | \`${percentage}\` | ${sprint.stats.statusCount[status]} |\n`;
+            });
+            markdown += '\n';
 
-          // Visão Geral das Tarefas
-          markdown += `## 📋 Visão Geral das Tarefas\n\n`;
-          markdown += `| Status | Responsável | Título | Data Início | Vencimento |\n`;
-          markdown += `|:------:|:------------|:-------|:------------|:-----------|:----------|\n`;
-          sprint.peopleStats.forEach(person => {
-              person.items.forEach(task => {
-                  const statusEmoji = this.getStatusEmoji(task.status);
-                  const startDate = task.startDate || '-';
-                  const dueDate = task.dueDate || '-';
-                  
-                  markdown += `| ${statusEmoji} | ${person.name} | ${task.title} | ${startDate} | ${dueDate} |\n`;
-              });
-          });
-          markdown += '\n';
+            // Visão Geral das Tarefas
+            markdown += `## 📋 Visão Geral das Tarefas\n\n`;
+            markdown += `| Status | Responsável | Título | Data Início | Vencimento |\n`;
+            markdown += `|:------:|:------------|:-------|:------------|:-----------|:----------|\n`;
+            sprint.peopleStats.forEach(person => {
+                person.items.forEach(task => {
+                    const statusEmoji = this.getStatusEmoji(task.status);
+                    const startDate = task.startDate || '-';
+                    const dueDate = task.dueDate || '-';
+                    
+                    markdown += `| ${statusEmoji} | ${person.name} | ${task.title} | ${startDate} | ${dueDate} |\n`;
+                });
+            });
+            markdown += '\n';
 
-          // Detalhamento por pessoa
-          markdown += `## 👥 Detalhamento por Pessoa\n\n`;
-          sprint.peopleStats.forEach(person => {
-              markdown += `### 👤 ${person.name}\n\n`;
+            // Detalhamento por pessoa
+            markdown += `## 👥 Detalhamento por Pessoa\n\n`;
+            sprint.peopleStats.forEach(person => {
+                markdown += `### 👤 ${person.name}\n\n`;
 
-              // Throughput individual
-              const personThroughput = this.calculateThroughputData(person.items);
-              if (personThroughput.length > 0) {
-                  markdown += `#### Throughput Individual\n\n`;
-                  markdown += this.generateThroughputTable(personThroughput) + '\n';
+                // Throughput individual
+                const personThroughput = this.calculateThroughputData(person.items);
+                if (personThroughput.length > 0) {
+                    markdown += `#### Throughput Individual\n\n`;
+                    markdown += this.generateThroughputTable(personThroughput) + '\n';
 
-                  const totalDays = personThroughput.length;
-                  const totalCompleted = personThroughput[personThroughput.length - 1].count;
-                  const avgDaily = (totalCompleted / totalDays).toFixed(1);
-                  
-                  markdown += `**Métricas Individuais:**\n`;
-                  markdown += `- Média diária de entregas: ${avgDaily} tarefas/dia\n`;
-                  markdown += `- Total de dias com entregas: ${totalDays}\n`;
-                  markdown += `- Total de tarefas entregues: ${totalCompleted}\n\n`;
-              }
+                    const totalDays = personThroughput.length;
+                    const totalCompleted = personThroughput[personThroughput.length - 1].count;
+                    const avgDaily = (totalCompleted / totalDays).toFixed(1);
+                    
+                    markdown += `**Métricas Individuais:**\n`;
+                    markdown += `- Média diária de entregas: ${avgDaily} tarefas/dia\n`;
+                    markdown += `- Total de dias com entregas: ${totalDays}\n`;
+                    markdown += `- Total de tarefas entregues: ${totalCompleted}\n\n`;
+                }
 
-              // Progresso em tabela
-              markdown += `#### Progresso\n\n`;
-              markdown += `| Status | Percentual |\n`;
-              markdown += `|:-------|:----------:|\n`;
-              Object.entries(person.statusPercentage).forEach(([status, percentage]) => {
-                  const emoji = this.getStatusEmoji(status);
-                  markdown += `| ${emoji} ${status} | \`${percentage}\` |\n`;
-              });
-              markdown += '\n';
+                // Progresso em tabela
+                markdown += `#### Progresso\n\n`;
+                markdown += `| Status | Percentual |\n`;
+                markdown += `|:-------|:----------:|\n`;
+                Object.entries(person.statusPercentage).forEach(([status, percentage]) => {
+                    const emoji = this.getStatusEmoji(status);
+                    markdown += `| ${emoji} ${status} | \`${percentage}\` |\n`;
+                });
+                markdown += '\n';
 
-              // Tabelas de tarefas específicas
-              const overdueTasks = person.items.filter(task => this.isOverdue(task));
-              if (overdueTasks.length > 0) {
-                  markdown += this.createTasksTable(overdueTasks, '⚠️ Tarefas Atrasadas');
-              }
+                // Tabelas de tarefas específicas
+                const overdueTasks = person.items.filter(task => this.isOverdue(task));
+                if (overdueTasks.length > 0) {
+                    markdown += this.createTasksTable(overdueTasks, '⚠️ Tarefas Atrasadas');
+                }
 
-              const todayTasks = person.items.filter(task => this.isToday(task));
-              if (todayTasks.length > 0) {
-                  markdown += this.createTasksTable(todayTasks, '📅 Tarefas do Dia');
-              }
+                const todayTasks = person.items.filter(task => this.isToday(task));
+                if (todayTasks.length > 0) {
+                    markdown += this.createTasksTable(todayTasks, '📅 Tarefas do Dia');
+                }
 
-              markdown += this.createTasksTable(person.items, 'Todas as Tarefas');
-          });
-      });
+                markdown += this.createTasksTable(person.items, 'Todas as Tarefas');
+            });
+        });
 
-      return markdown;
-  }
+        return markdown;
+    }
+
 }

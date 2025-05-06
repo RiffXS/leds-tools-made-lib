@@ -36,7 +36,7 @@ export class BacklogMarkdownConverter {
         const displayType = this.formatDisplayType(issue.type);
         const typeWithEmoji = typeEmoji ? `${typeEmoji} ${displayType}` : displayType;
         
-        const row = [           
+        const row = [
             typeWithEmoji,
             issue.title || '-',
             issue.description || '-',
@@ -86,6 +86,7 @@ export class BacklogMarkdownConverter {
                 });
                 
                 markdown += '\n';
+
             } else {
                 markdown += 'Nenhuma issue encontrada neste backlog.\n\n';
             }
@@ -97,4 +98,5 @@ export class BacklogMarkdownConverter {
         
         return markdown;
     }
+
 }

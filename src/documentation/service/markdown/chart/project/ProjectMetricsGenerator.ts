@@ -29,6 +29,28 @@ export class ProjectMetricsGenerator {
     return "TODO"; // Default fallback
   }
 
+  private parseISODate(dateStr: string): Date {
+    if (!dateStr) {
+      throw new Error('Data não fornecida');
+    }
+
+    dateStr = dateStr.trim();
+    const dateRegex = /^(\d{4})-(\d{2})-(\d{2})$/;
+    const match = dateStr.match(dateRegex);
+
+    if (!match) {
+      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd`);
+    }
+
+    const date = new Date(dateStr);
+
+    if (isNaN(date.getTime())) {
+      throw new Error(`Data inválida após conversão: ${dateStr}`);
+    }
+
+    return date;
+  }
+
   private parseBrazilianDate(dateStr: string): Date {
     if (!dateStr) {
       throw new Error('Data não fornecida');
@@ -54,7 +76,7 @@ export class ProjectMetricsGenerator {
 
   private formatDate(date: string): string {
     try {
-      const parsedDate = this.parseBrazilianDate(date);
+      const parsedDate = this.parseISODate(date);
       return parsedDate.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit'
@@ -67,8 +89,8 @@ export class ProjectMetricsGenerator {
 
   private calculateDuration(startDate: string, endDate: string): number {
     try {
-      const start = this.parseBrazilianDate(startDate);
-      const end = this.parseBrazilianDate(endDate);
+      const start = this.parseISODate(startDate);
+      const end = this.parseISODate(endDate);
       
       const startTime = start.getTime();
       const endTime = end.getTime();

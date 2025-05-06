@@ -12,13 +12,13 @@ import { BacklogMarkdownConverter } from "./report/BacklogReport.js";
 export class MarkdownBacklogService {
 
     
-    target_folder:string  
+    target_folder: string  
     jsonTimeBox: string
-    jsonFileBacklog:string
+    jsonFileBacklog: string
     DB_PATH: string
     sprintData: TimeBox[] 
     
-    constructor ( target_folder:string, db_path:string){
+    constructor (target_folder: string, db_path: string){
        
         this.target_folder = target_folder       
         this.jsonTimeBox = "timebox.json"
@@ -68,6 +68,5 @@ export class MarkdownBacklogService {
         }); 
         
     }   
-   
 
 }

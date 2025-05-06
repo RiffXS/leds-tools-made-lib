@@ -6,13 +6,13 @@ import { JSONFileSync  } from 'lowdb/node';
 import { RoadmapReportGenerator } from "./report/RoadmapReportGenerator.js";
 
 
-export class MardownRoadmapService {
+export class MarkdownRoadmapService {
 
     target_folder:string  
     jsonFile: string
     DB_PATH: string
     
-    constructor ( target_folder:string, db_path:string){
+    constructor (target_folder: string, db_path: string) {
         this.target_folder = target_folder       
         this.jsonFile = "roadmap.json"
         this.DB_PATH = db_path
@@ -44,7 +44,5 @@ export class MardownRoadmapService {
         }); 
         
     }  
-
-   
 
 }
