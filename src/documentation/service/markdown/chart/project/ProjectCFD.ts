@@ -54,7 +54,7 @@ export class ProjectCFD {
     const formatDate = (date: Date) => {
       const dia = date.getDate().toString().padStart(2, '0');
       const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-      return `${mes}-${dia}`;
+      return `${dia}/${mes}`;
     };
 
     const startDate = this.parseDate(this.sprints[0].startDate);

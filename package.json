@@ -1,6 +1,6 @@
 {
   "name": "made-report-lib-test",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "Made's Test Report Lib",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

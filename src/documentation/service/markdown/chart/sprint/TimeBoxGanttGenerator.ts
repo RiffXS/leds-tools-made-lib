@@ -4,7 +4,7 @@ import { getDayMonthYear } from '../../../../../util/date-utils.js';
 export class TimeBoxGanttGenerator {
     private static readonly MERMAID_FORMAT = 'YYYY-MM-DD';
 
-  private parseDate(dateStr: string): Date {
+  private parseDate(dateStr: string | undefined): Date {
     if (!dateStr) {
       throw new Error('Data não fornecida');
     }
