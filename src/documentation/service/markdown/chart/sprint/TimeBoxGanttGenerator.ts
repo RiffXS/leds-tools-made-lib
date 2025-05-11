@@ -1,30 +1,38 @@
 import { TimeBox, SprintItem } from '../../../../../model/models.js';
+import { getDayMonthYear } from '../../../../../util/date-utils.js';
 
 export class TimeBoxGanttGenerator {
     private static readonly MERMAID_FORMAT = 'YYYY-MM-DD';
 
-    private parseISODate(date: string | undefined): Date | null {
-        if (!date) return null;
-        const [year, month, day] = date.split('-').map(num => parseInt(num, 10));
-        const parsedDate = new Date(year, month - 1, day);
-        return !isNaN(parsedDate.getTime()) ? parsedDate : null;
+  private parseDate(dateStr: string): Date {
+    if (!dateStr) {
+      throw new Error('Data não fornecida');
     }
 
-    private parseBrazilianDate(date: string | undefined): Date | null {
-        if (!date) return null;
-        const [day, month, year] = date.split('/').map(num => parseInt(num, 10));
-        const parsedDate = new Date(year, month - 1, day);
-        return !isNaN(parsedDate.getTime()) ? parsedDate : null;
+    try {
+      const [day, month, year] = getDayMonthYear(dateStr);
+    
+      const date = new Date(`${year}-${month}-${day}`);
+
+      if (isNaN(date.getTime())) {
+        throw new Error(`Data inválida após conversão: ${dateStr}`);
+      }
+
+      return date;
+
+    } catch (err) {
+      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd OU dd/mm/yyyy`);
     }
+  }
 
     private isValidDate(date: string | undefined): boolean {
         if (!date) return false;
-        return this.parseISODate(date) !== null;
+        return this.parseDate(date) !== null;
     }
 
     private formatMermaidDate(date: string | undefined): string {
         if (!this.isValidDate(date)) return '';
-        const parsedDate = this.parseISODate(date)!;
+        const parsedDate = this.parseDate(date)!;
         const ano = parsedDate.getFullYear();
         const mes = String(parsedDate.getMonth() + 1).padStart(2, '0');
         const dia = String(parsedDate.getDate()).padStart(2, '0');

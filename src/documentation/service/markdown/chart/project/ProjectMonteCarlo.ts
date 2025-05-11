@@ -1,4 +1,5 @@
 import { TimeBox } from '../../../../../model/models.js';
+import { getDayMonthYear } from '../../../../../util/date-utils.js';
 
 export class ProjectMonteCarlo {
   private sprints: TimeBox[];
@@ -23,20 +24,31 @@ export class ProjectMonteCarlo {
     return "TODO"; // Default fallback
   }
 
-  private parseISODate(dateString: string): Date {
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  }
+  private parseDate(dateStr: string): Date {
+    if (!dateStr) {
+      throw new Error('Data não fornecida');
+    }
 
-  private parseBrazilianDate(dateString: string): Date {
-    const [day, month, year] = dateString.split('/').map(Number);
-    return new Date(year, month - 1, day);
+    try {
+      const [day, month, year] = getDayMonthYear(dateStr);
+    
+      const date = new Date(`${year}-${month}-${day}`);
+
+      if (isNaN(date.getTime())) {
+        throw new Error(`Data inválida após conversão: ${dateStr}`);
+      }
+
+      return date;
+
+    } catch (err) {
+      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd OU dd/mm/yyyy`);
+    }
   }
 
   private sortSprints(sprints: TimeBox[]): TimeBox[] {
     return sprints.sort((a, b) => 
-      this.parseISODate(a.startDate).getTime() - 
-      this.parseISODate(b.startDate).getTime()
+      this.parseDate(a.startDate).getTime() - 
+      this.parseDate(b.startDate).getTime()
     );
   }
 
@@ -72,7 +84,7 @@ export class ProjectMonteCarlo {
     const remainingTasks = totalTasks - completedTasks;
     
     const today = new Date();
-    const endDate = this.parseISODate(this.sprints[this.sprints.length - 1].endDate);
+    const endDate = this.parseDate(this.sprints[this.sprints.length - 1].endDate);
     const diffTime = endDate.getTime() - today.getTime();
     const remainingDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
@@ -117,7 +129,7 @@ export class ProjectMonteCarlo {
     }
 
     if (completionDates.length === 0) {
-      completionDates.push(this.parseISODate(this.sprints[this.sprints.length - 1].endDate));
+      completionDates.push(this.parseDate(this.sprints[this.sprints.length - 1].endDate));
     }
 
     const dateFrequencyMap = new Map<string, number>();
@@ -179,7 +191,7 @@ export class ProjectMonteCarlo {
       }
 
       const completionDates = this.simulateCompletionDates();
-      const projectEndDate = this.parseISODate(this.sprints[this.sprints.length - 1].endDate);
+      const projectEndDate = this.parseDate(this.sprints[this.sprints.length - 1].endDate);
       const onTimeProb = completionDates.find(d => d.date > projectEndDate)?.cumulativeProbability || 100;
       
       let mostLikelyDate = completionDates[0];
@@ -246,7 +258,7 @@ export class ProjectMonteCarlo {
 
       markdown += `\n## ℹ️ Informações do Projeto\n\n`;
       markdown += `- **Total de Sprints**: ${this.sprints.length}\n`;
-      markdown += `- **Início**: ${this.formatDate(this.parseISODate(this.sprints[0].startDate))}\n`;
+      markdown += `- **Início**: ${this.formatDate(this.parseDate(this.sprints[0].startDate))}\n`;
       markdown += `- **Término Planejado**: ${this.formatDate(projectEndDate)}\n`;
       markdown += `- **Total de Tarefas**: ${metrics.totalTasks}\n`;
       markdown += `- **Simulações Realizadas**: ${this.simulations.toLocaleString()}\n\n`;

@@ -1,4 +1,4 @@
-import { TimeBox, SprintItem, Person } from "../../../../model/models";
+import { TimeBox, SprintItem } from "../../../../model/models";
 
 interface PersonTaskItem {
   id: string;

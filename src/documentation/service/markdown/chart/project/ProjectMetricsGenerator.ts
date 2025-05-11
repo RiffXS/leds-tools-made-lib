@@ -4,6 +4,7 @@ import { Project, SprintItem, TimeBox } from '../../../../../model/models.js';
 import { ProjectCFD } from './ProjectCFD.js';
 import { ProjectThroughputGenerator } from './ProjectThroughputGenerator.js';
 import { ProjectMonteCarlo } from './ProjectMonteCarlo.js';
+import { getDayMonthYear } from '../../../../../util/date-utils.js';
 
 interface SprintStatus {
   completed: number;
@@ -29,54 +30,30 @@ export class ProjectMetricsGenerator {
     return "TODO"; // Default fallback
   }
 
-  private parseISODate(dateStr: string): Date {
+  private parseDate(dateStr: string): Date {
     if (!dateStr) {
       throw new Error('Data não fornecida');
     }
 
-    dateStr = dateStr.trim();
-    const dateRegex = /^(\d{4})-(\d{2})-(\d{2})$/;
-    const match = dateStr.match(dateRegex);
+    try {
+      const [day, month, year] = getDayMonthYear(dateStr);
+    
+      const date = new Date(`${year}-${month}-${day}`);
 
-    if (!match) {
-      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd`);
+      if (isNaN(date.getTime())) {
+        throw new Error(`Data inválida após conversão: ${dateStr}`);
+      }
+
+      return date;
+
+    } catch (err) {
+      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd OU dd/mm/yyyy`);
     }
-
-    const date = new Date(dateStr);
-
-    if (isNaN(date.getTime())) {
-      throw new Error(`Data inválida após conversão: ${dateStr}`);
-    }
-
-    return date;
-  }
-
-  private parseBrazilianDate(dateStr: string): Date {
-    if (!dateStr) {
-      throw new Error('Data não fornecida');
-    }
-
-    dateStr = dateStr.trim();
-    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-    const match = dateStr.match(dateRegex);
-
-    if (!match) {
-      throw new Error(`Data inválida: ${dateStr}. Formato esperado: dd/mm/yyyy`);
-    }
-
-    const [, day, month, year] = match;
-    const date = new Date(`${year}-${month}-${day}`);
-
-    if (isNaN(date.getTime())) {
-      throw new Error(`Data inválida após conversão: ${dateStr}`);
-    }
-
-    return date;
   }
 
   private formatDate(date: string): string {
     try {
-      const parsedDate = this.parseISODate(date);
+      const parsedDate = this.parseDate(date);
       return parsedDate.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit'
@@ -89,8 +66,8 @@ export class ProjectMetricsGenerator {
 
   private calculateDuration(startDate: string, endDate: string): number {
     try {
-      const start = this.parseISODate(startDate);
-      const end = this.parseISODate(endDate);
+      const start = this.parseDate(startDate);
+      const end = this.parseDate(endDate);
       
       const startTime = start.getTime();
       const endTime = end.getTime();

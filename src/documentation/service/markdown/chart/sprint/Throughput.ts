@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { TimeBox } from '../../../../../model/models.js';
+import { getDayMonthYear } from '../../../../../util/date-utils.js';
 
 export class ThroughputGenerator {
   private data: TimeBox;
@@ -13,33 +14,24 @@ export class ThroughputGenerator {
     this.outputPath = outputPath;
   }
 
-  private parseISODate(dateString: string): Date {
-    try {
-      const [year, month, day] = dateString.split('-').map(Number);
-      const date = new Date(year, month - 1, day);
-
-      if (isNaN(date.getTime())) {
-        throw new Error(`Data inválida: ${dateString}`);
-      }
-
-      return date
-    } catch (error) {
-      throw new Error(`Erro ao processar data ${dateString}: ${error}`)
+  private parseDate(dateStr: string): Date {
+    if (!dateStr) {
+      throw new Error('Data não fornecida');
     }
-  }
 
-  private parseBrazilianDate(dateString: string): Date {
     try {
-      const [day, month, year] = dateString.split('/').map(Number);
-      const date = new Date(year, month - 1, day);
-      
+      const [day, month, year] = getDayMonthYear(dateStr);
+    
+      const date = new Date(`${year}-${month}-${day}`);
+
       if (isNaN(date.getTime())) {
-        throw new Error(`Data inválida: ${dateString}`);
+        throw new Error(`Data inválida após conversão: ${dateStr}`);
       }
-      
+
       return date;
-    } catch (error) {
-      throw new Error(`Erro ao processar data ${dateString}: ${error}`);
+
+    } catch (err) {
+      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd OU dd/mm/yyyy`);
     }
   }
 
@@ -63,8 +55,8 @@ export class ThroughputGenerator {
 
   private processData() {
     try {
-      const startDate = this.parseISODate(this.data.startDate);
-      const endDate = this.parseISODate(this.data.endDate);
+      const startDate = this.parseDate(this.data.startDate);
+      const endDate = this.parseDate(this.data.endDate);
       const days: {
         day: string
         date: Date
@@ -85,7 +77,7 @@ export class ThroughputGenerator {
         // Alterado para usar dueDate ao invés de startDate
         const issuesUntilDay = this.data.sprintItems.filter(issue => {
           if (!issue.dueDate) return false;
-          const issueDueDate = this.parseISODate(issue.dueDate);
+          const issueDueDate = this.parseDate(issue.dueDate);
           return issueDueDate <= currentDate;
         });
 

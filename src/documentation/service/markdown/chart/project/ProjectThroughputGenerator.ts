@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { TimeBox } from '../../../../../model/models.js';
+import { getDayMonthYear } from '../../../../../util/date-utils.js';
 
 export class ProjectThroughputGenerator {
     private sprints: TimeBox[];
@@ -21,20 +22,31 @@ export class ProjectThroughputGenerator {
       return "TODO"; // Default fallback
     }
 
-    private parseISODate(dateString: string): Date {
-      const [year, month, day] = dateString.split('-').map(Number);
-      return new Date(year, month - 1, day);
+  private parseDate(dateStr: string): Date {
+    if (!dateStr) {
+      throw new Error('Data não fornecida');
     }
 
-    private parseBrazilianDate(dateString: string): Date {
-      const [day, month, year] = dateString.split('/').map(Number);
-      return new Date(year, month - 1, day);
+    try {
+      const [day, month, year] = getDayMonthYear(dateStr);
+    
+      const date = new Date(`${year}-${month}-${day}`);
+
+      if (isNaN(date.getTime())) {
+        throw new Error(`Data inválida após conversão: ${dateStr}`);
+      }
+
+      return date;
+
+    } catch (err) {
+      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd OU dd/mm/yyyy`);
     }
+  }
 
     private sortSprints(sprints: TimeBox[]): TimeBox[] {
       return sprints.sort((a, b) => 
-        this.parseISODate(a.startDate).getTime() - 
-        this.parseISODate(b.startDate).getTime()
+        this.parseDate(a.startDate).getTime() - 
+        this.parseDate(b.startDate).getTime()
       );
     }
   
@@ -45,8 +57,8 @@ export class ProjectThroughputGenerator {
         return `${mes}-${dia}`;
       };
   
-      const startDate = this.parseISODate(this.sprints[0].startDate);
-      const endDate = this.parseISODate(this.sprints[this.sprints.length - 1].endDate);
+      const startDate = this.parseDate(this.sprints[0].startDate);
+      const endDate = this.parseDate(this.sprints[this.sprints.length - 1].endDate);
       const days: {
         day: string
         date: Date
@@ -60,7 +72,7 @@ export class ProjectThroughputGenerator {
         
         const allTasksUntilDay = this.sprints.flatMap(sprint => {
           return sprint.sprintItems.filter(task => {
-            const taskDueDate = task.dueDate ? this.parseISODate(task.dueDate) : null;
+            const taskDueDate = task.dueDate ? this.parseDate(task.dueDate) : null;
             return taskDueDate ? taskDueDate.toDateString() === currentDate.toDateString() : false;
           });
         });

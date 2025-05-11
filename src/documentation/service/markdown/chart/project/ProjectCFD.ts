@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { SprintItem, TimeBox } from '../../../../../model/models.js';
+import { getDayMonthYear } from '../../../../../util/date-utils.js';
 
 export class ProjectCFD {
   private sprints: TimeBox[];
@@ -10,20 +11,31 @@ export class ProjectCFD {
     this.outputPath = outputPath;
   }
 
-  private parseISODate(dateString: string): Date {
-    const [year, month, day] = dateString.split('-').map(Number)
-    return new Date(year, month - 1, day)
-  }
+  private parseDate(dateStr: string): Date {
+    if (!dateStr) {
+      throw new Error('Data não fornecida');
+    }
 
-  private parseBrazilianDate(dateString: string): Date {
-    const [day, month, year] = dateString.split('/').map(Number);
-    return new Date(year, month - 1, day);
+    try {
+      const [day, month, year] = getDayMonthYear(dateStr);
+    
+      const date = new Date(`${year}-${month}-${day}`);
+
+      if (isNaN(date.getTime())) {
+        throw new Error(`Data inválida após conversão: ${dateStr}`);
+      }
+
+      return date;
+
+    } catch (err) {
+      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd OU dd/mm/yyyy`);
+    }
   }
 
   private sortSprints(sprints: TimeBox[]): TimeBox[] {
     return sprints.sort((a, b) => 
-      this.parseISODate(a.startDate).getTime() - 
-      this.parseISODate(b.startDate).getTime()
+      this.parseDate(a.startDate).getTime() - 
+      this.parseDate(b.startDate).getTime()
     );
   }
 
@@ -45,8 +57,8 @@ export class ProjectCFD {
       return `${mes}-${dia}`;
     };
 
-    const startDate = this.parseISODate(this.sprints[0].startDate);
-    const endDate = this.parseISODate(this.sprints[this.sprints.length - 1].endDate);
+    const startDate = this.parseDate(this.sprints[0].startDate);
+    const endDate = this.parseDate(this.sprints[this.sprints.length - 1].endDate);
     const days: {
       day: string
       date: Date
@@ -62,7 +74,7 @@ export class ProjectCFD {
       
       const allTasksUntilDay = this.sprints.flatMap(sprint => {
         return sprint.sprintItems.filter(task => {
-          const taskStartDate = task.startDate ? this.parseISODate(task.startDate) : null;
+          const taskStartDate = task.startDate ? this.parseDate(task.startDate) : null;
           return taskStartDate ? taskStartDate <= currentDate : true;
         });
       });
@@ -105,7 +117,7 @@ export class ProjectCFD {
     const chartHeight = height - margin.top - margin.bottom;
 
     const xScale = (date: Date) => {
-      const startDate = this.parseISODate(this.sprints[0].startDate);
+      const startDate = this.parseDate(this.sprints[0].startDate);
       const totalDays = Math.max(1, dailyData.length - 1);
       const dayIndex = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       return margin.left + (dayIndex * (chartWidth / totalDays));

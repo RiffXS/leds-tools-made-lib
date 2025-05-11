@@ -1,4 +1,5 @@
 import { TimeBox } from "../../../../../model/models.js";
+import { getDayMonthYear } from "../../../../../util/date-utils.js";
 
 
 export interface SprintTaskMC {
@@ -46,33 +47,24 @@ export class SprintMonteCarlo {
     this.simulations = simulations;
   }
 
-  private parseISODate(dateString: string): Date {
-    try {
-      const [year, month, day] = dateString.split('-').map(Number);
-      const date = new Date(year, month - 1, day);
-
-      if (isNaN(date.getTime())) {
-        throw new Error(`Data inválida: ${dateString}`);
-      }
-
-      return date
-    } catch (error) {
-      throw new Error(`Erro ao processar data ${dateString}: ${error}`)
+  private parseDate(dateStr: string): Date {
+    if (!dateStr) {
+      throw new Error('Data não fornecida');
     }
-  }
 
-  private parseBrazilianDate(dateString: string): Date {
     try {
-      const [day, month, year] = dateString.split('/').map(Number);
-      const date = new Date(year, month - 1, day);
-      
+      const [day, month, year] = getDayMonthYear(dateStr);
+    
+      const date = new Date(`${year}-${month}-${day}`);
+
       if (isNaN(date.getTime())) {
-        throw new Error(`Data inválida: ${dateString}`);
+        throw new Error(`Data inválida após conversão: ${dateStr}`);
       }
-      
+
       return date;
-    } catch (error) {
-      throw new Error(`Erro ao processar data ${dateString}: ${error}`);
+
+    } catch (err) {
+      throw new Error(`Data inválida: ${dateStr}. Formato esperado: yyyy-mm-dd OU dd/mm/yyyy`);
     }
   }
 
@@ -103,7 +95,7 @@ export class SprintMonteCarlo {
   private calculateRemainingWorkdays(): number {
     try {
       const today = new Date();
-      const endDate = this.parseISODate(this.data.endDate);
+      const endDate = this.parseDate(this.data.endDate);
       const diffTime = endDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return Math.max(1, diffDays); // Garante pelo menos 1 dia restante
@@ -162,7 +154,7 @@ export class SprintMonteCarlo {
 
     // Se não houver datas simuladas, usa a data planejada
     if (completionDates.length === 0) {
-      completionDates.push(this.parseISODate(this.data.endDate));
+      completionDates.push(this.parseDate(this.data.endDate));
     }
 
     const dateFrequencyMap = new Map<string, number>();
@@ -223,7 +215,7 @@ export class SprintMonteCarlo {
     try {
       const completionDates = this.simulateCompletionDates();
       const metrics = this.getSprintMetrics();
-      const sprintEndDate = this.parseISODate(this.data.endDate);
+      const sprintEndDate = this.parseDate(this.data.endDate);
 
       // Se não houver tarefas, retorna relatório simplificado
       if (metrics.totalTasks === 0) {
@@ -320,7 +312,7 @@ export class SprintMonteCarlo {
 
       markdown += `## ℹ️ Informações da Sprint\n\n`;
       markdown += `- **Sprint**: ${this.data.name}\n`;
-      markdown += `- **Início**: ${this.formatDate(this.parseISODate(this.data.startDate))}\n`;
+      markdown += `- **Início**: ${this.formatDate(this.parseDate(this.data.startDate))}\n`;
       markdown += `- **Término Planejado**: ${this.formatDate(sprintEndDate)}\n`;
       markdown += `- **Total de Tarefas**: ${metrics.totalTasks}\n`;
       markdown += `- **Simulações Realizadas**: ${this.simulations.toLocaleString()}\n\n`;

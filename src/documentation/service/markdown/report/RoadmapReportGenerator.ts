@@ -13,10 +13,10 @@ export class RoadmapReportGenerator {
     try {
         // Verifica se a data já está no formato brasileiro (dd/mm/yyyy)
         if (dateStr.includes('/')) {
-            const [day, month, year] = dateStr.split('/');
-            const date = new Date(`${year}-${month}-${day}`);
-            if (isNaN(date.getTime())) return 'N/A';
-            return dateStr;
+          const [day, month, year] = dateStr.split('/');
+          const date = new Date(`${year}-${month}-${day}`);
+          if (isNaN(date.getTime())) return 'N/A';
+          return dateStr;
         }
 
         // Se estiver no formato ISO (yyyy-mm-dd)
